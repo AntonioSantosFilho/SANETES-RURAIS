@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 
-import { api, loadSession, saveSession, type Answer, type Monitoring, type Session, type System } from './lib/api'
+import { api, loadSession, saveSession, type AccessLog, type Answer, type Monitoring, type Session, type System } from './lib/api'
 import { assets } from './lib/assets'
 import { entryQuestions, finalQuestions, outletPrimaryQuestions, photoDefinitions, q13Options, type Question } from './lib/questions'
 
@@ -53,9 +53,9 @@ function Login({ onLogin }: { onLogin: (session: Session) => void }) {
   return <><main className="login-page">
     <section className="login-brand">
       <img src={assets.brand.wordmark} alt="Sanetes Rurais" />
-      <span className="kicker">Sobre o Sanetes rurais</span>
-      <h1>Monitoramento de sistemas de tratamento.</h1>
-      <p>O sanetes rurais é um aplicativo fruto de uma pesquisa de mestrado, desenvolvido para dispositivos android para auxiliar o processo de monitoramento em campo de ETEs domiciliares e comunitárias. Seus criadores e respectivos e-mails para contato são: Andreza Carla Lopes André (andreza_carlalopes@hotmail.com), Antonio dos Santos Filho (antonio.santosfilho@discente.univasf.edu.br) e Miriam Cleide Cavalcante de Amorim (miriamcleidea@gmail.com).</p>
+      <span className="kicker">Sanetes rurais</span>
+      <h1>Monitoramento de ETEs rurais.</h1>
+      <p>Aplicativo de apoio ao acompanhamento de sistemas domiciliares e comunitários de tratamento de esgoto.</p>
     </section>
     <section className="login-card">
       <img className="login-card-logo" src={assets.brand.wordmark} alt="Sanetes Rurais" />
@@ -66,11 +66,10 @@ function Login({ onLogin }: { onLogin: (session: Session) => void }) {
         {error && <p className="form-error" role="alert">{error}</p>}
         <button className="button primary" disabled={loading}>{loading ? 'Entrando…' : 'Entrar'}</button>
       </form>
-      <p className="demo-note"><strong>Demonstração:</strong> admin/admin123 ou campo/campo123</p>
       <button className="mobile-help-button" type="button" onClick={() => setShowHelp(true)}>Dúvidas sobre o aplicativo</button>
       <Link className="research-link" to="/sobre">Sobre o projeto e a pesquisa</Link>
     </section>
-  </main>{showHelp && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowHelp(false)}><section className="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title" onMouseDown={(event) => event.stopPropagation()}><button className="modal-close" type="button" aria-label="Fechar dúvidas" onClick={() => setShowHelp(false)}>×</button><span className="kicker">Sanetes rurais</span><h2 id="help-title">Dúvidas sobre o aplicativo</h2><p>O sanetes rurais é um aplicativo fruto de uma pesquisa de mestrado, desenvolvido para dispositivos android para auxiliar o processo de monitoramento em campo de ETEs domiciliares e comunitárias.</p><div className="help-notice"><strong>Antes de iniciar</strong><p>Certifique-se de que seu aparelho continue conectado à rede de internet durante o envio do monitoramento.</p></div><h3>Contatos</h3><p>Andreza Carla Lopes André<br /><a href="mailto:andreza_carlalopes@hotmail.com">andreza_carlalopes@hotmail.com</a></p><p>Antonio dos Santos Filho<br /><a href="mailto:antonio.santosfilho@discente.univasf.edu.br">antonio.santosfilho@discente.univasf.edu.br</a></p><p>Miriam Cleide Cavalcante de Amorim<br /><a href="mailto:miriamcleidea@gmail.com">miriamcleidea@gmail.com</a></p><p className="help-demo"><strong>Acesso de demonstração:</strong><br />admin / admin123<br />campo / campo123</p><button className="button primary" type="button" onClick={() => setShowHelp(false)}>Entendi</button></section></div>}</>
+  </main>{showHelp && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowHelp(false)}><section className="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title" onMouseDown={(event) => event.stopPropagation()}><button className="modal-close" type="button" aria-label="Fechar dúvidas" onClick={() => setShowHelp(false)}>×</button><span className="kicker">Sanetes rurais</span><h2 id="help-title">Dúvidas sobre o aplicativo</h2><p>O sanetes rurais é um aplicativo fruto de uma pesquisa de mestrado, desenvolvido para dispositivos android para auxiliar o processo de monitoramento em campo de ETEs domiciliares e comunitárias.</p><div className="help-notice"><strong>Antes de iniciar</strong><p>Certifique-se de que seu aparelho continue conectado à rede de internet durante o envio do monitoramento.</p></div><h3>Contatos</h3><p>Andreza Carla Lopes André<br /><a href="mailto:andreza_carlalopes@hotmail.com">andreza_carlalopes@hotmail.com</a></p><p>Antonio dos Santos Filho<br /><a href="mailto:antonio.santosfilho@discente.univasf.edu.br">antonio.santosfilho@discente.univasf.edu.br</a></p><p>Miriam Cleide Cavalcante de Amorim<br /><a href="mailto:miriamcleidea@gmail.com">miriamcleidea@gmail.com</a></p><button className="button primary" type="button" onClick={() => setShowHelp(false)}>Entendi</button></section></div>}</>
 }
 
 function AboutResearch() {
@@ -168,13 +167,14 @@ function AdminLayout({ session, onLogout }: { session: Session; onLogout: () => 
   return <div className="app-shell">
     <aside className="sidebar">
       <Link className="sidebar-brand" to="/admin/sistemas"><img src={assets.brand.wordmark} alt="Sanetes rurais" /></Link>
-      <nav><NavLink to="/admin/sistemas">Cadastro</NavLink><NavLink to="/admin/monitoramentos">Dados coletados</NavLink></nav>
+      <nav><NavLink to="/admin/sistemas">Cadastro</NavLink><NavLink to="/admin/monitoramentos">Dados coletados</NavLink><NavLink to="/admin/acessos">Logs de acesso</NavLink></nav>
       <div className="sidebar-user"><span>{session.user.name}</span><button onClick={onLogout}>Sair</button></div>
     </aside>
     <div className="app-content"><Routes>
       <Route path="sistemas" element={<SystemsPage session={session} />} />
       <Route path="monitoramentos" element={<MonitoringsPage session={session} />} />
       <Route path="monitoramentos/:id" element={<MonitoringDetail session={session} />} />
+      <Route path="acessos" element={<AccessLogsPage session={session} />} />
       <Route path="*" element={<Navigate to="sistemas" replace />} />
     </Routes></div>
   </div>
@@ -233,6 +233,33 @@ function MonitoringsPage({ session }: { session: Session }) {
     {message && <div className="notice">{message}</div>}
     <div className="table-panel"><div className="table-head"><span>Sistema</span><span>Coleta</span><span>Situação</span><span /></div>{items.map((item) => <div className="table-row" key={item.id}><strong>{item.system?.name ?? 'Sistema'}</strong><span>{formatDate(item.createdAt, true)}</span><span className="status-badge">Sincronizado</span><div className="row-actions"><Link to={`/admin/monitoramentos/${item.id}`}>Ver detalhes →</Link><button className="text-button danger" onClick={() => remove(item)}>Apagar</button></div></div>)}</div>
     {!items.length && <Empty text="Nenhum monitoramento enviado." />}</main>
+}
+
+function AccessLogsPage({ session }: { session: Session }) {
+  const [items, setItems] = useState<AccessLog[]>([])
+  const [message, setMessage] = useState('')
+  useEffect(() => {
+    api<AccessLog[]>('/access-logs', {}, session.token).then(setItems).catch((error) => setMessage(error.message))
+  }, [session.token])
+  const successful = items.filter((item) => item.success).length
+  const denied = items.length - successful
+  return <main className="page">
+    <PageHeader eyebrow="Segurança" title="Logs de acesso" description="Últimas 500 tentativas de entrada registradas no aplicativo." />
+    {message && <div className="notice">{message}</div>}
+    <section className="access-summary" aria-label="Resumo dos acessos"><article><span>Total registrado</span><strong>{items.length}</strong></article><article><span>Acessos autorizados</span><strong>{successful}</strong></article><article><span>Tentativas recusadas</span><strong>{denied}</strong></article></section>
+    <div className="access-table">
+      <div className="access-table-head"><span>Data e hora</span><span>Login</span><span>Perfil</span><span>Resultado</span><span>Endereço IP</span><span>Dispositivo</span></div>
+      {items.map((item) => <article className="access-table-row" key={item.id}>
+        <span data-label="Data e hora">{formatDate(item.createdAt, true)}</span>
+        <strong data-label="Login">{item.login}</strong>
+        <span data-label="Perfil">{item.role === 'admin' ? 'Administrador' : item.role === 'field' ? 'Responsável' : 'Não identificado'}</span>
+        <span data-label="Resultado" className={`access-status ${item.success ? 'success' : 'denied'}`}>{item.success ? 'Autorizado' : 'Recusado'}</span>
+        <span data-label="Endereço IP" className="access-ip">{item.ipAddress}</span>
+        <span data-label="Dispositivo" className="access-device" title={item.userAgent ?? 'Não informado'}>{deviceLabel(item.userAgent)}</span>
+      </article>)}
+    </div>
+    {!items.length && !message && <Empty text="Nenhum acesso registrado até o momento." />}
+  </main>
 }
 
 function MonitoringDetail({ session }: { session: Session }) {
@@ -348,6 +375,13 @@ function WizardActions({ error, back, next, nextLabel = 'Avançar', disabled }: 
 }
 
 function Empty({ text }: { text: string }) { return <div className="empty"><img src={assets.navigation.folder} alt="" /><p>{text}</p></div> }
+function deviceLabel(userAgent?: string | null) {
+  if (!userAgent) return 'Não informado'
+  const platform = /Android/i.test(userAgent) ? 'Android' : /iPhone|iPad/i.test(userAgent) ? 'iOS' : /Windows/i.test(userAgent) ? 'Windows' : /Macintosh/i.test(userAgent) ? 'macOS' : /Linux/i.test(userAgent) ? 'Linux' : 'Outro sistema'
+  const browser = /Edg\//i.test(userAgent) ? 'Edge' : /OPR\//i.test(userAgent) ? 'Opera' : /Chrome\//i.test(userAgent) ? 'Chrome' : /Firefox\//i.test(userAgent) ? 'Firefox' : /Safari\//i.test(userAgent) ? 'Safari' : 'Aplicativo'
+  return `${platform} · ${browser}`
+}
+
 function formatDate(value: string, time = false) { return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium', ...(time ? { timeStyle: 'short' as const } : {}) }).format(new Date(value)) }
 function questionDetails(key: string) { return questionsByKey.get(key) }
 function answerLabel(key: string, answer: Answer, answers: Record<string, Answer>) {

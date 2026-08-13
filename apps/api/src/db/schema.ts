@@ -30,6 +30,24 @@ export const users = pgTable(
   (table) => [uniqueIndex('users_login_uidx').on(table.login)],
 )
 
+export const accessLogs = pgTable(
+  'access_logs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    login: text('login').notNull(),
+    role: userRole('role'),
+    success: boolean('success').notNull(),
+    ipAddress: text('ip_address').notNull(),
+    userAgent: text('user_agent'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index('access_logs_created_at_idx').on(table.createdAt),
+    index('access_logs_user_idx').on(table.userId),
+  ],
+)
+
 export const systems = pgTable(
   'systems',
   {

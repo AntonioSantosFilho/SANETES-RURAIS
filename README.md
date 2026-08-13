@@ -59,6 +59,28 @@ npm run android:apk --workspace @sanetes/web
 Em um celular, a URL da API deverá apontar para um domínio HTTPS acessível pelo
 dispositivo; `localhost` funciona apenas no ambiente web local.
 
+## Produção em VPS com Nginx existente
+
+O arquivo `docker-compose.production.yml` não publica portas no host. O banco e
+a API ficam na rede interna do Sanetes, e apenas o serviço `sanetes-web` entra na
+rede Docker do proxy reverso.
+
+Confira a rede utilizada pelo Nginx:
+
+```bash
+docker inspect hexflow_nginx --format '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{println}}{{end}}'
+```
+
+Informe esse nome em `PROXY_NETWORK` no `.env` e suba a aplicação:
+
+```bash
+docker compose -f docker-compose.production.yml up -d --build
+```
+
+Use `deploy/nginx-sanetes.conf.example` como base para o novo domínio. O Nginx
+deve encaminhar as requisições para `http://sanetes-web:80`; as rotas `/api`
+serão encaminhadas internamente pelo Nginx do próprio frontend.
+
 ## Estrutura
 
 ```text

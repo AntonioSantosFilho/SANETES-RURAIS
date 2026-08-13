@@ -1,0 +1,67 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sanetes}
+      POSTGRES_USER: ${POSTGRES_USER:-sanetes}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sanetes} -d ${POSTGRES_DB:-sanetes}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - sanetes_internal
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sanetes}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-sanetes}
+      WEB_ORIGIN: ${WEB_ORIGIN:?Defina WEB_ORIGIN com o domínio HTTPS do Sanetes}
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET no arquivo .env}
+      ADMIN_LOGIN: ${ADMIN_LOGIN:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD no arquivo .env}
+      FIELD_LOGIN: ${FIELD_LOGIN:-campo}
+      FIELD_PASSWORD: ${FIELD_PASSWORD:?Defina FIELD_PASSWORD no arquivo .env}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sanetes_internal
+
+  web:
+    container_name: sanetes-web
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - sanetes_internal
+      - reverse_proxy
+
+networks:
+  sanetes_internal:
+    name: sanetes_internal
+    internal: true
+  reverse_proxy:
+    external: true
+    name: ${PROXY_NETWORK:-hexflow_hexflow_net}
+
+volumes:
+  postgres_data:
+  uploads_data:

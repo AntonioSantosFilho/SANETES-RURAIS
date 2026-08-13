@@ -27,6 +27,16 @@ export type Monitoring = {
   photos?: Array<{ id: string; category: string; originalName: string; url: string }>
 }
 export type Session = { token: string; user: User; systems: System[] }
+export type AccessLog = {
+  id: string
+  userId?: string | null
+  login: string
+  role?: Role | null
+  success: boolean
+  ipAddress: string
+  userAgent?: string | null
+  createdAt: string
+}
 
 const tokenKey = 'sanetes.session'
 const apiBaseUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '/api'

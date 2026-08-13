@@ -15,6 +15,13 @@
       "when": 1786579000000,
       "tag": "0001_product_domain",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786644000000,
+      "tag": "0002_access_logs",
+      "breakpoints": true
     }
   ]
 }

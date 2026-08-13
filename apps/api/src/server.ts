@@ -12,6 +12,7 @@ import { z } from 'zod'
 
 import { db, pool } from './db/client.js'
 import {
+  accessLogs,
   monitoringPhotos,
   monitorings,
   systems,
@@ -21,7 +22,7 @@ import {
 
 type AuthUser = { id: string; role: 'admin' | 'field'; login: string }
 
-const app = Fastify({ logger: true, bodyLimit: 110 * 1024 * 1024 })
+const app = Fastify({ logger: true, bodyLimit: 110 * 1024 * 1024, trustProxy: true })
 const uploadDirectory = process.env.UPLOAD_DIR ?? './uploads'
 const uploadRoot = isAbsolute(uploadDirectory) ? uploadDirectory : join(process.cwd(), uploadDirectory)
 await mkdir(uploadRoot, { recursive: true })
@@ -58,6 +59,21 @@ async function requireAdmin(request: FastifyRequest) {
 
 const loginSchema = z.object({ login: z.string().trim().min(2), password: z.string().min(4) })
 
+async function registerAccess(request: FastifyRequest, login: string, user: typeof users.$inferSelect | undefined, success: boolean) {
+  try {
+    await db.insert(accessLogs).values({
+      userId: user?.id,
+      login,
+      role: user?.role,
+      success,
+      ipAddress: request.ip,
+      userAgent: request.headers['user-agent'],
+    })
+  } catch (error) {
+    request.log.error({ error }, 'Não foi possível registrar o acesso')
+  }
+}
+
 app.get('/health', async () => {
   await db.execute(sql`select 1`)
   return { status: 'ok', service: 'sanetes-api', database: 'connected', timestamp: new Date().toISOString() }
@@ -67,16 +83,24 @@ app.post('/auth/login', async (request, reply) => {
   const parsed = loginSchema.safeParse(request.body)
   if (!parsed.success) return reply.status(400).send({ message: 'Informe login e senha.' })
 
-  const [user] = await db.select().from(users).where(eq(users.login, parsed.data.login.toLowerCase())).limit(1)
+  const normalizedLogin = parsed.data.login.toLowerCase()
+  const [user] = await db.select().from(users).where(eq(users.login, normalizedLogin)).limit(1)
   if (!user || !user.active || !(await compare(parsed.data.password, user.passwordHash))) {
+    await registerAccess(request, normalizedLogin, user, false)
     return reply.status(401).send({ message: 'Login ou senha inválidos.' })
   }
+
+  await registerAccess(request, normalizedLogin, user, true)
 
   const assignedSystems = user.role === 'field'
     ? await db.select().from(systems).where(and(eq(systems.fieldUserId, user.id), eq(systems.status, 'active')))
     : []
   const token = app.jwt.sign({ id: user.id, role: user.role, login: user.login }, { expiresIn: '12h' })
   return { token, user: { id: user.id, name: user.name, login: user.login, role: user.role }, systems: assignedSystems }
+})
+
+app.get('/access-logs', { preHandler: requireAdmin }, async () => {
+  return db.select().from(accessLogs).orderBy(desc(accessLogs.createdAt)).limit(500)
 })
 
 app.get('/auth/me', { preHandler: authenticate }, async (request, reply) => {
