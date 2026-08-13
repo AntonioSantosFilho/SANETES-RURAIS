@@ -17,6 +17,7 @@ services:
       retries: 10
 
   api:
+    container_name: sanetes-api
     build:
       context: .
       dockerfile: apps/api/Dockerfile

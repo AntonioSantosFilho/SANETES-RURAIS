@@ -17,6 +17,7 @@ services:
       - sanetes_internal
 
   api:
+    container_name: sanetes-api
     build:
       context: .
       dockerfile: apps/api/Dockerfile
