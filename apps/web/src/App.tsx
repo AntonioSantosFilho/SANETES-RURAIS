@@ -153,6 +153,11 @@ function AboutResearch() {
         </ul>
       </section>
 
+      <section className="about-download" aria-labelledby="download-title">
+        <div className="about-download-main"><div><span className="about-download-label">Aplicativo Android</span><h2 id="download-title">Baixar o Sanetes Rurais</h2><p>Instale a versão 2026 do aplicativo em um dispositivo Android para realizar os monitoramentos em campo.</p><small>Arquivo APK · 6,6 MB</small></div><a className="button primary" href="/downloads/sanetes-rurais-2026.apk" download>Baixar APK</a></div>
+        <details className="apk-guide"><summary>Como instalar o APK no Android</summary><div><p>Como o aplicativo ainda não está na Play Store, o Android poderá solicitar uma autorização antes da instalação.</p><ol><li>Toque em <strong>Baixar APK</strong> e confirme o download.</li><li>Abra o arquivo baixado. Se aparecer um bloqueio, toque em <strong>Configurações</strong>.</li><li>Ative <strong>Permitir desta fonte</strong> somente para o navegador ou gerenciador de arquivos utilizado.</li><li>Volte à instalação e toque em <strong>Instalar</strong>.</li></ol><p className="apk-guide-note">Após instalar, você pode desativar novamente “Permitir desta fonte” nas configurações do Android. Baixe o aplicativo somente por esta página oficial.</p></div></details>
+      </section>
+
       <section className="about-document">
         <div><h2>Dissertação completa</h2><p>O documento contém a fundamentação, a metodologia, os resultados, as limitações e os anexos do trabalho.</p></div>
         <a className="button primary" href="/docs/dissertacao-sanetes.pdf" target="_blank" rel="noreferrer">Abrir PDF</a>

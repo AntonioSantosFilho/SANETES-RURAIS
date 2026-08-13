@@ -37,6 +37,7 @@ uploads/
 *.aab
 *.ap_
 *.aar
+!/apps/web/public/downloads/*.apk
 
 # Android / Gradle
 .gradle/

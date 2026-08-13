@@ -157,6 +157,20 @@ textarea { min-height: 130px; resize: vertical; }
 .about-document h2 { margin-bottom: 6px; }
 .about-document p { margin: 0; }
 .about-document .button { flex: 0 0 auto; }
+.about-download { display: grid; gap: 22px; margin-top: 48px; padding: 30px; border-radius: 18px; color: #fff; background: #263f2b; }
+.about-download-main { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+.about-download-label { color: #c7d8b6; font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.about-download h2 { margin: 7px 0; font-size: 1.5rem; }
+.about-download p { max-width: 580px; margin: 0 0 9px; color: #dce6d7; font-size: .86rem; line-height: 1.6; }
+.about-download small { color: #adbea6; font-size: .7rem; }
+.about-download .button { flex: 0 0 auto; color: #263f2b; background: #dbe6bf; box-shadow: none; }
+.about-download .button:hover { background: #eef4dc; }
+.apk-guide { border-top: 1px solid rgb(255 255 255 / 16%); }
+.apk-guide summary { padding-top: 20px; color: #e4edd7; cursor: pointer; font-size: .8rem; font-weight: 700; }
+.apk-guide > div { padding-top: 15px; }
+.apk-guide ol { margin: 12px 0 16px; padding-left: 22px; color: #dce6d7; font-size: .8rem; line-height: 1.65; }
+.apk-guide li + li { margin-top: 5px; }
+.about-download .apk-guide-note { max-width: none; margin: 0; padding: 11px 13px; border-radius: 9px; color: #dce6d7; background: rgb(255 255 255 / 8%); font-size: .75rem; }
 .about-footer { padding: 26px max(24px, calc((100% - 980px) / 2)); border-top: 1px solid #d5dad0; background: #fff; }
 .about-footer p { margin: 0; color: #727b6f; font-size: .72rem; line-height: 1.6; }
 
@@ -428,6 +442,9 @@ textarea { min-height: 130px; resize: vertical; }
   .about-warning { margin-top: 38px; padding: 22px 20px; }
   .about-document { align-items: stretch; flex-direction: column; padding: 22px; }
   .about-document .button { width: 100%; }
+  .about-download { padding: 23px; }
+  .about-download-main { align-items: stretch; flex-direction: column; }
+  .about-download .button { width: 100%; }
   .about-footer { padding: 22px 16px; }
   .help-modal { max-height: calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); padding: 28px 21px 21px; border-radius: 19px; }
   .help-modal h2 { font-size: 1.45rem; }
