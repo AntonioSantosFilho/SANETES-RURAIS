@@ -1,0 +1,63 @@
+# Dependências
+node_modules/
+
+# Builds e arquivos gerados
+dist/
+build/
+coverage/
+*.tsbuildinfo
+/apps/web/vite.config.js
+/apps/web/vite.config.d.ts
+
+# Variáveis de ambiente e segredos
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.pem
+*.key
+*.jks
+*.keystore
+
+# Credenciais e anotações locais deste projeto
+/ADM LOGIN.txt
+/código hash.txt
+/sanetes - conta user.txt
+
+# Dados e arquivos temporários
+tmp/
+temp/
+uploads/
+*.log
+*.pid
+*.seed
+
+# Artefatos instaláveis
+*.apk
+*.aab
+*.ap_
+*.aar
+
+# Android / Gradle
+.gradle/
+local.properties
+*.iml
+.externalNativeBuild/
+.cxx/
+captures/
+/apps/web/android/capacitor-cordova-android-plugins/
+/apps/web/android/app/src/main/assets/public/
+/apps/web/android/app/src/main/assets/capacitor.config.json
+/apps/web/android/app/src/main/assets/capacitor.plugins.json
+/apps/web/android/app/src/main/res/xml/config.xml
+
+# Editores e sistema operacional
+.idea/
+.vscode/
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
