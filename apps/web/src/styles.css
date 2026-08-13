@@ -192,6 +192,8 @@ textarea { min-height: 130px; resize: vertical; }
 .table-head { color: #7c8477; background: #eff1eb; font-size: .72rem; font-weight: 700; text-transform: uppercase; }
 .table-row { border-top: 1px solid #edf0e9; font-size: .88rem; }
 .table-row a { color: #4a703a; font-weight: 700; text-decoration: none; }
+.table-row .details-button { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 8px 13px; border-radius: 9px; color: #fff; background: #3e5e32; box-shadow: 0 7px 18px rgb(62 94 50 / 18%); }
+.table-row .details-button:hover { background: #304d26; }
 .row-actions { display: flex; align-items: center; justify-content: flex-end; gap: 13px; white-space: nowrap; }
 .access-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
 .access-summary article { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 20px; border: 1px solid #dde0d6; border-radius: 14px; background: #fff; }
@@ -225,6 +227,16 @@ textarea { min-height: 130px; resize: vertical; }
 .answer-content small { display: block; margin-top: 4px; color: #737c70; line-height: 1.4; }
 .recommendation { padding: 12px 14px; border-left: 3px solid #8ea767; color: #4e6144; background: #f1f5ec; }
 .admin-photos { margin-top: 18px; }
+.photo-zoom-trigger { position: relative; display: block; width: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
+.photo-zoom-trigger img { display: block; }
+.photo-zoom-trigger span { position: absolute; right: 10px; bottom: 10px; padding: 6px 9px; border-radius: 8px; color: #fff; background: rgb(25 42 27 / 82%); font-size: .68rem; font-weight: 700; opacity: 0; transform: translateY(4px); transition: opacity .18s ease, transform .18s ease; }
+.photo-zoom-trigger:hover span, .photo-zoom-trigger:focus-visible span { opacity: 1; transform: translateY(0); }
+.photo-zoom-trigger:focus-visible { outline: 3px solid #7f9b68; outline-offset: -3px; }
+.image-lightbox { position: fixed; inset: 0; z-index: 100; display: grid; padding: clamp(14px, 3vw, 40px); place-items: center; background: rgb(12 20 13 / 90%); backdrop-filter: blur(8px); cursor: zoom-out; }
+.image-lightbox figure { position: relative; display: grid; max-width: min(1100px, 100%); max-height: 100%; margin: 0; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; border-radius: 16px; background: #fff; box-shadow: 0 28px 90px rgb(0 0 0 / 45%); cursor: default; }
+.image-lightbox img { display: block; width: 100%; max-height: calc(100dvh - 130px); object-fit: contain; background: #172018; }
+.image-lightbox figcaption { padding: 13px 54px 13px 18px; color: #34442f; font-size: .84rem; font-weight: 700; }
+.image-lightbox-close { position: absolute; top: 10px; right: 10px; z-index: 1; display: grid; width: 42px; height: 42px; padding: 0; place-items: center; border: 1px solid rgb(255 255 255 / 30%); border-radius: 50%; color: #fff; background: rgb(20 31 21 / 78%); cursor: pointer; font-size: 1.7rem; }
 
 .field-shell { min-height: 100vh; background: radial-gradient(circle at 100% 0, #e5ebcb 0, transparent 32rem), #f5f2e8; }
 .field-shell > header { display: flex; align-items: center; justify-content: space-between; min-height: 94px; padding: 10px max(20px, calc((100% - 1180px) / 2)); background: #fff; }
@@ -282,11 +294,17 @@ textarea { min-height: 130px; resize: vertical; }
 .wizard-actions .form-error { padding: 11px 14px; border-radius: 9px; background: #f8e9e6; }
 .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 .photo-input, .photo-grid figure { position: relative; display: flex; flex-direction: column; min-height: 260px; margin: 0; overflow: hidden; border: 1px solid #dce1d7; border-radius: 16px; background: #fff; cursor: pointer; }
+.photo-input { cursor: default; }
 .photo-input img, .photo-grid figure img { width: 100%; height: 190px; object-fit: cover; }
 .photo-input strong, .photo-input small, .photo-grid figcaption { padding: 0 18px; }
 .photo-input strong { margin: 15px 0 3px; color: #34442f; }
 .photo-input small { padding-bottom: 18px; color: #778073; font-weight: 400; }
 .photo-input input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.photo-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: auto; padding: 0 18px 18px; }
+.photo-choice { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 9px 10px; border-radius: 10px; cursor: pointer; font-size: .72rem; line-height: 1.25; text-align: center; }
+.photo-choice.camera { color: #fff; background: #3e5e32; }
+.photo-choice.gallery { color: #3e5e32; background: #e8ede3; }
+.photo-choice:hover, .photo-choice:focus-within { box-shadow: 0 0 0 3px rgb(102 134 77 / 18%); }
 .photo-placeholder { display: grid; height: 190px; place-items: center; color: #6f8a59; background: #e9eee1; font-size: 3rem; }
 .photo-grid figcaption { padding: 13px 16px; color: #4c5b47; font-size: .8rem; font-weight: 700; }
 .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -431,6 +449,7 @@ textarea { min-height: 130px; resize: vertical; }
   .table-row { grid-template-columns: 1fr auto; margin-bottom: 10px; padding: 16px; border: 1px solid #dde2d7; border-radius: 14px; background: #fff; }
   .table-row > span:first-of-type { grid-column: 1 / -1; }
   .table-row a { text-align: left; }
+  .table-row .details-button { min-height: 42px; text-align: center; }
   .row-actions { align-items: flex-end; flex-direction: column; gap: 7px; }
   .access-summary { grid-template-columns: 1fr; gap: 8px; }
   .access-summary article { padding: 13px 16px; }
@@ -467,6 +486,7 @@ textarea { min-height: 130px; resize: vertical; }
   .wizard-actions .button { width: 100%; min-height: 50px; }
   .photo-input, .photo-grid figure { min-height: 220px; }
   .photo-input img, .photo-grid figure img, .photo-placeholder { height: 155px; }
+  .photo-zoom-trigger span { opacity: 1; transform: none; }
   .color-group-options { gap: 7px; }
   .color-group img { height: 145px; }
   .color-group span { padding: 8px 4px; font-size: .62rem; }

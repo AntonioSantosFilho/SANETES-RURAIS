@@ -1,7 +1,7 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 
-import { api, loadSession, saveSession, type AccessLog, type Answer, type Monitoring, type Session, type System } from './lib/api'
+import { api, apiResourceUrl, loadSession, saveSession, type AccessLog, type Answer, type Monitoring, type Session, type System } from './lib/api'
 import { assets } from './lib/assets'
 import { entryQuestions, finalQuestions, outletPrimaryQuestions, photoDefinitions, q13Options, type Question } from './lib/questions'
 
@@ -19,7 +19,7 @@ function App() {
   const [session, setSessionState] = useState<Session | null>(() => loadSession())
   const setSession = (value: Session | null) => { saveSession(value); setSessionState(value) }
   return <BrowserRouter><Routes>
-    <Route path="/login" element={session ? <Navigate to={session.user.role === 'admin' ? '/admin/sistemas' : '/monitoramentos/novo/inicio'} replace /> : <Login onLogin={setSession} />} />
+    <Route path="/login" element={session ? <Navigate to={session.user.role === 'admin' ? '/admin/monitoramentos' : '/monitoramentos/novo/inicio'} replace /> : <Login onLogin={setSession} />} />
     <Route path="/sobre" element={<AboutResearch />} />
     <Route path="/admin/*" element={<Protected session={session} role="admin"><AdminLayout session={session!} onLogout={() => setSession(null)} /></Protected>} />
     <Route path="/monitoramentos/novo/:step" element={<Protected session={session} role="field"><Questionnaire session={session!} onLogout={() => setSession(null)} /></Protected>} />
@@ -29,7 +29,7 @@ function App() {
 
 function Protected({ session, role, children }: { session: Session | null; role: 'admin' | 'field'; children: ReactNode }) {
   if (!session) return <Navigate to="/login" replace />
-  if (session.user.role !== role) return <Navigate to={session.user.role === 'admin' ? '/admin/sistemas' : '/monitoramentos/novo/inicio'} replace />
+  if (session.user.role !== role) return <Navigate to={session.user.role === 'admin' ? '/admin/monitoramentos' : '/monitoramentos/novo/inicio'} replace />
   return children
 }
 
@@ -166,7 +166,7 @@ function AboutResearch() {
 function AdminLayout({ session, onLogout }: { session: Session; onLogout: () => void }) {
   return <div className="app-shell">
     <aside className="sidebar">
-      <Link className="sidebar-brand" to="/admin/sistemas"><img src={assets.brand.wordmark} alt="Sanetes rurais" /></Link>
+      <Link className="sidebar-brand" to="/admin/monitoramentos"><img src={assets.brand.wordmark} alt="Sanetes rurais" /></Link>
       <nav><NavLink to="/admin/sistemas">Cadastro</NavLink><NavLink to="/admin/monitoramentos">Dados coletados</NavLink><NavLink to="/admin/acessos">Logs de acesso</NavLink></nav>
       <div className="sidebar-user"><span>{session.user.name}</span><button onClick={onLogout}>Sair</button></div>
     </aside>
@@ -175,7 +175,7 @@ function AdminLayout({ session, onLogout }: { session: Session; onLogout: () => 
       <Route path="monitoramentos" element={<MonitoringsPage session={session} />} />
       <Route path="monitoramentos/:id" element={<MonitoringDetail session={session} />} />
       <Route path="acessos" element={<AccessLogsPage session={session} />} />
-      <Route path="*" element={<Navigate to="sistemas" replace />} />
+      <Route path="*" element={<Navigate to="monitoramentos" replace />} />
     </Routes></div>
   </div>
 }
@@ -231,7 +231,7 @@ function MonitoringsPage({ session }: { session: Session }) {
   }
   return <main className="page"><PageHeader eyebrow="Dados coletados" title="Banco de dados" description="Consulte as coletas enviadas, respostas e evidências fotográficas." />
     {message && <div className="notice">{message}</div>}
-    <div className="table-panel"><div className="table-head"><span>Sistema</span><span>Coleta</span><span>Situação</span><span /></div>{items.map((item) => <div className="table-row" key={item.id}><strong>{item.system?.name ?? 'Sistema'}</strong><span>{formatDate(item.createdAt, true)}</span><span className="status-badge">Sincronizado</span><div className="row-actions"><Link to={`/admin/monitoramentos/${item.id}`}>Ver detalhes →</Link><button className="text-button danger" onClick={() => remove(item)}>Apagar</button></div></div>)}</div>
+    <div className="table-panel"><div className="table-head"><span>Sistema</span><span>Coleta</span><span>Situação</span><span /></div>{items.map((item) => <div className="table-row" key={item.id}><strong>{item.system?.name ?? 'Sistema'}</strong><span>{formatDate(item.createdAt, true)}</span><span className="status-badge">Sincronizado</span><div className="row-actions"><Link className="details-button" to={`/admin/monitoramentos/${item.id}`}>Ver detalhes →</Link><button className="text-button danger" onClick={() => remove(item)}>Apagar</button></div></div>)}</div>
     {!items.length && <Empty text="Nenhum monitoramento enviado." />}</main>
 }
 
@@ -264,14 +264,24 @@ function AccessLogsPage({ session }: { session: Session }) {
 
 function MonitoringDetail({ session }: { session: Session }) {
   const navigate = useNavigate(); const { id } = useParams(); const [item, setItem] = useState<Monitoring | null>(null)
+  const [selectedPhoto, setSelectedPhoto] = useState<{ url: string; label: string; originalName: string } | null>(null)
   useEffect(() => { if (id) api<Monitoring>(`/monitorings/${id}`, {}, session.token).then(setItem) }, [id, session.token])
+  useEffect(() => {
+    if (!selectedPhoto) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setSelectedPhoto(null) }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener('keydown', closeOnEscape) }
+  }, [selectedPhoto])
   if (!item) return <main className="page"><Empty text="Carregando monitoramento…" /></main>
   const monitoringId = item.id
   const outletAnswerKeys = [...outletPrimaryQuestions.map((question) => question.key), 'q13', ...finalQuestions.map((question) => question.key)]
   async function remove() { if (window.confirm('Apagar permanentemente este monitoramento e suas fotografias?')) { await api(`/monitorings/${monitoringId}`, { method: 'DELETE' }, session.token); navigate('/admin/monitoramentos') } }
   return <main className="page"><Link className="back-link" to="/admin/monitoramentos">← Voltar</Link><PageHeader eyebrow="Detalhe da coleta" title={item.system?.name ?? 'Monitoramento'} description={`Coleta registrada em ${formatDate(item.createdAt, true)}`} action={<button className="button danger" onClick={remove}>Apagar registro</button>} />
     <section className="detail-layout"><div className="panel answers"><div className="answers-heading"><span className="kicker">Questionário preenchido</span><h2>Respostas do monitoramento</h2></div><AnswerSection title="Entrada do sistema" keys={entryQuestions.map((question) => question.key)} answers={item.answers} /><AnswerSection title="Saída do sistema" keys={outletAnswerKeys} answers={item.answers} /></div>
-      <div><section className="panel"><h2>Feedback</h2><p>{item.feedback.quality}</p>{item.feedback.recommendations.map((text) => <p className="recommendation" key={text}>{text}</p>)}</section><section className="photo-grid admin-photos">{item.photos?.map((photo) => <figure key={photo.id}><img src={photo.url} alt={photo.originalName} /><figcaption>{photoLabel(photo.category)}</figcaption></figure>)}</section></div></section>
+      <div><section className="panel"><h2>Feedback</h2><p>{item.feedback.quality}</p>{item.feedback.recommendations.map((text) => <p className="recommendation" key={text}>{text}</p>)}</section><section className="photo-grid admin-photos">{item.photos?.map((photo) => { const label = photoLabel(photo.category); const photoUrl = apiResourceUrl(photo.url); return <figure key={photo.id}><button className="photo-zoom-trigger" type="button" onClick={() => setSelectedPhoto({ url: photoUrl, label, originalName: photo.originalName })} aria-label={`Ampliar ${label}`}><img src={photoUrl} alt={photo.originalName} /><span>Ampliar imagem</span></button><figcaption>{label}</figcaption></figure> })}</section></div></section>
+    {selectedPhoto && <div className="image-lightbox" role="presentation" onMouseDown={() => setSelectedPhoto(null)}><figure role="dialog" aria-modal="true" aria-label={selectedPhoto.label} onMouseDown={(event) => event.stopPropagation()}><button className="image-lightbox-close" type="button" aria-label="Fechar imagem ampliada" autoFocus onClick={() => setSelectedPhoto(null)}>×</button><img src={selectedPhoto.url} alt={selectedPhoto.originalName} /><figcaption>{selectedPhoto.label}</figcaption></figure></div>}
   </main>
 }
 
@@ -300,7 +310,7 @@ function Questionnaire({ session, onLogout }: { session: Session; onLogout: () =
   })
   const go = (next: string) => { setError(''); navigate(`/monitoramentos/novo/${next}`); window.scrollTo(0, 0) }
   function validateQuestions(questions: Question[]) {
-    for (const question of questions) { const answer = draft.answers[question.key]; if (!answer?.value) return `Responda a questão ${question.number}.`; if (question.dateWhen === answer.value && !answer.date) return `Informe a data da questão ${question.number}.`; if (question.detailLabel && !answer.detail?.trim()) return `Complete a questão ${question.number}.` }
+    for (const question of questions) { const answer = draft.answers[question.key]; const number = question.displayNumber ?? question.number; if (!answer?.value) return `Responda a questão ${number}.`; if (question.dateWhen === answer.value && !answer.date) return `Informe a data da questão ${number}.`; if (question.detailLabel && !answer.detail?.trim()) return `Complete a questão ${number}.` }
     return ''
   }
   function advance(next: string, questions: Question[]) { const problem = validateQuestions(questions); if (problem) setError(problem); else go(next) }
@@ -337,9 +347,32 @@ function Questionnaire({ session, onLogout }: { session: Session; onLogout: () =
     {step === 'saida' && <><QuestionList questions={outletPrimaryQuestions.filter((question) => question.key !== 'q12')} answers={draft.answers} onChange={setAnswer} /><ColorGroupQuestion answer={draft.answers.q12} onChange={(answer) => setAnswer('q12', answer)} />{draft.answers.q12?.value && draft.answers.q12.value !== 'NENHUM CLUSTER' && <Q13 answer={draft.answers.q13} cluster={draft.answers.q12.value} onChange={(answer) => setAnswer('q13', answer)} />}<WizardActions error={error} back={() => go('entrada')} next={() => advance('manejo', [...outletPrimaryQuestions, { key: 'q13', number: 13, displayNumber: 6, prompt: '', options: q13Options(draft.answers.q12?.value) }])} /></>}
     {step === 'manejo' && <><QuestionList questions={finalQuestions} answers={draft.answers} onChange={setAnswer} /><WizardActions error={error} back={() => go('saida')} next={() => advance('saida-salva', finalQuestions)} /></>}
     {step === 'saida-salva' && <section className="question-card confirmation-card"><div className="success-mark">✓</div><h2>Obrigado. A situação da SAÍDA do seu sistema foi salva com sucesso!</h2><label>Gostaria de relatar alguma dúvida ou dificuldade com o manejo do seu sistema?<textarea value={draft.report} onChange={(event) => setDraft({ ...draft, report: event.target.value })} /></label><WizardActions error={error} back={() => go('manejo')} next={() => go('fotos')} /></section>}
-    {step === 'fotos' && <><section className="photo-grid">{photoDefinitions.map((photo) => <label className="photo-input" key={photo.key}>{photos[photo.key] ? <img src={URL.createObjectURL(photos[photo.key]!)} alt="Prévia" /> : <span className="photo-placeholder">+</span>}<strong>{photo.label}</strong><small>{photo.help}</small><input type="file" accept="image/*" capture="environment" onChange={(event) => { const file = event.target.files?.[0]; if (file) setPhotos((current) => ({ ...current, [photo.key]: file })) }} /></label>)}</section><WizardActions error={error} back={() => go('manejo')} next={() => { if (photoDefinitions.some((photo) => !photos[photo.key])) setError('Adicione as quatro fotografias.'); else go('revisao') }} /></>}
+    {step === 'fotos' && <><section className="photo-grid">{photoDefinitions.map((photo) => <PhotoAttachment key={photo.key} photo={photo} file={photos[photo.key]} onSelect={(file) => setPhotos((current) => ({ ...current, [photo.key]: file }))} />)}</section><WizardActions error={error} back={() => go('manejo')} next={() => { if (photoDefinitions.some((photo) => !photos[photo.key])) setError('Adicione as quatro fotografias.'); else go('revisao') }} /></>}
     {step === 'revisao' && <><section className="review-grid"><div className="panel"><span className="kicker">Sistema</span><h2>{session.systems.find((system) => system.id === draft.systemId)?.name}</h2><p>17 de 17 respostas preenchidas</p><p>{Object.keys(photos).length} de 4 fotos selecionadas</p>{draft.report && <p>Relato de manejo incluído</p>}</div><div className="panel sync-panel"><div className="sync-icon">↥</div><h2>Pronto para sincronizar</h2><p>O envio só será concluído depois da confirmação do servidor.</p></div></section><WizardActions error={error} back={() => go('fotos')} next={submitMonitoring} nextLabel={sending ? 'Enviando…' : 'Enviar monitoramento'} disabled={sending} /></>}
   </main></FieldShell>
+}
+
+function PhotoAttachment({ photo, file, onSelect }: { photo: (typeof photoDefinitions)[number]; file?: File; onSelect: (file: File) => void }) {
+  const [preview, setPreview] = useState('')
+  useEffect(() => {
+    if (!file) { setPreview(''); return }
+    const url = URL.createObjectURL(file)
+    setPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
+  function selectFile(event: ChangeEvent<HTMLInputElement>) {
+    const selected = event.currentTarget.files?.[0]
+    if (selected) onSelect(selected)
+    event.currentTarget.value = ''
+  }
+  return <article className="photo-input">
+    {preview ? <img src={preview} alt={`Prévia de ${photo.label}`} /> : <span className="photo-placeholder">+</span>}
+    <strong>{photo.label}</strong><small>{photo.help}</small>
+    <div className="photo-actions">
+      <label className="photo-choice camera">Tirar foto<input type="file" accept="image/*" capture="environment" onChange={selectFile} /></label>
+      <label className="photo-choice gallery">Escolher da galeria<input type="file" accept="image/*" onChange={selectFile} /></label>
+    </div>
+  </article>
 }
 
 function FieldShell({ session, onLogout, progress, children }: { session: Session; onLogout: () => void; progress: number; children: ReactNode }) {

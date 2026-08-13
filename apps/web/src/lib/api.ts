@@ -41,6 +41,11 @@ export type AccessLog = {
 const tokenKey = 'sanetes.session'
 const apiBaseUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '/api'
 
+export function apiResourceUrl(path: string) {
+  if (/^(?:https?:|data:|blob:)/i.test(path) || !/^https?:\/\//i.test(apiBaseUrl)) return path
+  return new URL(path.startsWith('/') ? path : `/${path}`, new URL(apiBaseUrl).origin).toString()
+}
+
 export function loadSession(): Session | null {
   try {
     const value = localStorage.getItem(tokenKey)
